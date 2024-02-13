@@ -1,9 +1,9 @@
 # Get and install Easy noVNC.
-FROM golang:1.14-buster AS easy-novnc-build
+FROM golang:1.14-buster AS kasmvnc-build
 WORKDIR /src
-RUN go mod init build && \
-    go get github.com/geek1011/easy-novnc@v1.1.0 && \
-    go build -o /bin/easy-novnc github.com/geek1011/easy-novnc
+RUN wget https://github.com/kasmtech/KasmVNC/releases/download/v1.3.0/kasmvncserver_bookworm_1.3.0_amd64.deb
+    sudo apt-get install ./kasmvncserver_*.deb
+    sudo addgroup $USER ssl-cert
 
 # Get TigerVNC and Supervisor for isolating the container.
 FROM debian:buster
@@ -14,7 +14,7 @@ RUN apt-get update -y && \
 
 # Get all of the remaining dependencies for the OS, VNC, and Prusaslicer.
 RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends lxterminal nano wget openssh-client rsync ca-certificates xdg-utils htop tar xzip gzip bzip2 zip unzip && \
+    apt-get install -y --no-install-recommends lxterminal nano wget openssh-client rsync ca-certificates xdg-utils htop tar xzip gzip bzip2 zip unzip libc6 libssl3 libstdc++6 libwebp7 && \
     rm -rf /var/lib/apt/lists
 
 RUN apt update && apt install -y --no-install-recommends --allow-unauthenticated \
@@ -57,7 +57,7 @@ RUN chmod +x /slic3r/get_latest_prusaslicer_release.sh \
   && echo "XDG_DOWNLOAD_DIR=\"/prints/\"" >> /home/slic3r/.config/user-dirs.dirs \
   && echo "file:///prints prints" >> /home/slic3r/.gtk-bookmarks 
 
-COPY --from=easy-novnc-build /bin/easy-novnc /usr/local/bin/
+COPY --from=kasmvnc-build /bin/kasmvncserver /usr/local/bin/
 COPY menu.xml /etc/xdg/openbox/
 COPY supervisord.conf /etc/
 
